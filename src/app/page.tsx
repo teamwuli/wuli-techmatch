@@ -1,101 +1,135 @@
-import Image from "next/image";
+import Link from "next/link";
+
+const steps = [
+  { num: "01", icon: "📋", title: "Tell Us About You", desc: "Share your company profile and current challenges in under 60 seconds." },
+  { num: "02", icon: "🤖", title: "AI Analyzes", desc: "Our AI evaluates your needs against 481+ providers across 7 categories." },
+  { num: "03", icon: "📊", title: "Get Your Report", desc: "Receive a custom business case, strategic approaches, and next steps." },
+];
+
+const features = [
+  { icon: "💰", title: "Business Case", desc: "Data-driven cost analysis with realistic benchmarks, ROI timelines, and risk assessment tailored to your situation." },
+  { icon: "🎯", title: "Provider Matching", desc: "AI-powered matching against 481+ vetted providers across UCaaS, CCaaS, SD-WAN, Security, and more." },
+  { icon: "📑", title: "Comparison Report", desc: "Strategic approach recommendations with fit scores, deployment timelines, and cost estimates." },
+];
+
+const stats = [
+  { value: "481+", label: "Providers" },
+  { value: "7", label: "Categories" },
+  { value: "<60s", label: "Analysis Time" },
+];
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="min-h-screen">
+      {/* Nav */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-lg border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center font-bold text-sm">W</div>
+            <span className="font-semibold text-lg">WULI TechMatch</span>
+          </div>
+          <Link
+            href="/analyze"
+            className="px-5 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            Get Analysis
+          </Link>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      </nav>
+
+      {/* Hero */}
+      <section className="pt-32 pb-20 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-block px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm mb-8">
+            AI-Powered Technology Advisory
+          </div>
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            Your tech stack,{" "}
+            <span className="gradient-text">analyzed in 60 seconds</span>
+          </h1>
+          <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
+            Tell us about your business. Our AI matches you against 600+ technology providers and builds a custom business case — free.
+          </p>
+          <Link
+            href="/analyze"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-xl text-lg font-semibold transition-all hover:scale-105 shadow-lg shadow-blue-600/25"
+          >
+            Analyze My Tech Stack
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+          </Link>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-16">How It Works</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {steps.map((step) => (
+              <div key={step.num} className="glass-card p-8 text-center">
+                <div className="text-4xl mb-4">{step.icon}</div>
+                <div className="text-blue-400 text-sm font-mono mb-2">Step {step.num}</div>
+                <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
+                <p className="text-slate-400">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-20 px-6 bg-slate-900/50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-4">What You Get</h2>
+          <p className="text-slate-400 text-center mb-16 max-w-xl mx-auto">Every analysis includes three deliverables, generated in real-time by AI.</p>
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((f) => (
+              <div key={f.title} className="glass-card-hover p-8">
+                <div className="text-4xl mb-4">{f.icon}</div>
+                <h3 className="text-xl font-semibold mb-3">{f.title}</h3>
+                <p className="text-slate-400 leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="py-16 px-6">
+        <div className="max-w-4xl mx-auto glass-card p-8">
+          <div className="grid grid-cols-3 divide-x divide-white/10">
+            {stats.map((s) => (
+              <div key={s.label} className="text-center px-4">
+                <div className="text-3xl md:text-4xl font-bold gradient-text">{s.value}</div>
+                <div className="text-slate-400 mt-1">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer CTA */}
+      <section className="py-20 px-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to see what you&apos;re missing?</h2>
+          <p className="text-slate-400 mb-10 text-lg">Free analysis. No commitment. Results in 60 seconds.</p>
+          <Link
+            href="/analyze"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-xl text-lg font-semibold transition-all hover:scale-105 shadow-lg shadow-blue-600/25"
+          >
+            Start Free Analysis
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 px-6 border-t border-white/5">
+        <div className="max-w-7xl mx-auto flex items-center justify-between text-sm text-slate-500">
+          <span>© 2026 WULI TechMatch. All rights reserved.</span>
+          <span>Powered by AI</span>
+        </div>
       </footer>
-    </div>
+    </main>
   );
 }
