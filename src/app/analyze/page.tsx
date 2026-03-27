@@ -10,6 +10,8 @@ interface CompanyData {
   size: string;
   industry: string;
   trigger: string;
+  contact_name: string;
+  contact_title: string;
 }
 
 interface BusinessCase {
@@ -131,7 +133,9 @@ function StepProfile({
   return (
     <div className="animate-fadeIn max-w-xl mx-auto">
       <h2 className="text-3xl font-bold mb-2">
-        {hasUrlParams ? "We already know a bit about you" : "Tell us about your company"}
+        {hasUrlParams && companyData.contact_name
+          ? `Hi ${companyData.contact_name} — we put this together for you`
+          : hasUrlParams ? "We already know a bit about you" : "Tell us about your company"}
       </h2>
       <p className="text-slate-400 mb-8">This helps us tailor the analysis to your situation.</p>
       <div className="space-y-6">
@@ -170,6 +174,26 @@ function StepProfile({
               <option key={ind} value={ind} className="bg-slate-900">{ind}</option>
             ))}
           </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Your Name <span className="text-slate-500">(optional)</span></label>
+          <input
+            type="text"
+            value={companyData.contact_name}
+            onChange={(e) => setCompanyData({ ...companyData, contact_name: e.target.value })}
+            placeholder="Jane Smith"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Your Title <span className="text-slate-500">(optional)</span></label>
+          <input
+            type="text"
+            value={companyData.contact_title}
+            onChange={(e) => setCompanyData({ ...companyData, contact_title: e.target.value })}
+            placeholder="CTO"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
         </div>
         <button
           onClick={onNext}
@@ -457,6 +481,8 @@ function AnalyzeWizardInner() {
     size: "",
     industry: "",
     trigger: "",
+    contact_name: "",
+    contact_title: "",
   });
   const [painPoints, setPainPoints] = useState<string[]>([]);
   const [freeText, setFreeText] = useState("");
@@ -477,9 +503,11 @@ function AnalyzeWizardInner() {
     const size = searchParams.get("size") || "";
     const industry = searchParams.get("industry") || "";
 
-    if (trigger || company || size || industry) {
+    const contact_name = searchParams.get("name") || "";
+    const contact_title = searchParams.get("title") || "";
+    if (trigger || company || size || industry || contact_name || contact_title) {
       setHasUrlParams(true);
-      setCompanyData({ name: company, size, industry, trigger });
+      setCompanyData({ name: company, size, industry, trigger, contact_name, contact_title });
     }
   }, [searchParams]);
 
