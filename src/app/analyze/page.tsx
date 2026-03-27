@@ -619,8 +619,16 @@ function AnalyzeWizardInner() {
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
 
-      const resultsEl = document.getElementById("results-content");
-      if (!resultsEl) return;
+      let resultsEl = document.getElementById("results-content");
+      
+      // If on step 5, results-content might not be visible - check for hidden copy
+      if (!resultsEl) {
+        resultsEl = document.getElementById("results-content-hidden");
+      }
+      if (!resultsEl) {
+        alert("No results found. Please go back and run the analysis again.");
+        return;
+      }
 
       // Temporarily show results for capture
       const wrapper = document.createElement("div");
@@ -735,7 +743,41 @@ function AnalyzeWizardInner() {
           />
         )}
 
-        {currentStep === 5 && <StepNextSteps onDownloadPdf={handleDownloadPdf} />}
+        {currentStep === 5 && (
+          <>
+            <StepNextSteps onDownloadPdf={handleDownloadPdf} />
+            {/* Hidden results for PDF capture on step 5 */}
+            <div id="results-content-hidden" className="hidden">
+              <div className="p-8">
+                <h1 className="text-2xl font-bold mb-4">WULI TechMatch Analysis — {companyData.name}</h1>
+                {businessCase && (
+                  <div className="mb-8">
+                    <h2 className="text-xl font-bold mb-2">Business Case</h2>
+                    <p className="mb-4">{businessCase.executive_summary}</p>
+                    <p><strong>Current Cost:</strong> {businessCase.cost_of_current_situation}</p>
+                    <p><strong>Potential Savings:</strong> {businessCase.potential_annual_savings}</p>
+                    <p><strong>ROI Timeline:</strong> {businessCase.roi_timeline}</p>
+                    <p><strong>Risk of Inaction:</strong> {businessCase.risk_of_inaction}</p>
+                    <p className="mt-4"><strong>Key Insight:</strong> {businessCase.key_insight}</p>
+                  </div>
+                )}
+                {comparisonReport.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-bold mb-4">Strategic Approaches</h2>
+                    {comparisonReport.map((a, i) => (
+                      <div key={i} className="mb-6 p-4 border border-white/10 rounded-lg">
+                        <h3 className="font-bold">{a.approach_name} — Fit: {a.fit_score}%</h3>
+                        <p>{a.description}</p>
+                        <p><strong>Cost:</strong> {a.estimated_annual_cost} | <strong>Timeline:</strong> {a.deployment_timeline}</p>
+                        <p><strong>Best for:</strong> {a.best_for}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </main>
   );
