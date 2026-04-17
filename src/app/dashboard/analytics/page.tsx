@@ -191,6 +191,12 @@ export default function AnalyticsPage() {
   const DASHBOARD_PW = "wuli2026";
 
   useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem("wuli_dashboard_auth") === "true") {
+      setAuthed(true);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!authed) return;
     async function load() {
       const { data } = await supabase
@@ -216,13 +222,13 @@ export default function AnalyticsPage() {
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                if (password === DASHBOARD_PW) setAuthed(true);
+                if (password === DASHBOARD_PW) { setAuthed(true); sessionStorage.setItem("wuli_dashboard_auth", "true"); };
               }
             }}
             className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
           />
           <button
-            onClick={() => { if (password === DASHBOARD_PW) setAuthed(true); }}
+            onClick={() => { if (password === DASHBOARD_PW) { setAuthed(true); sessionStorage.setItem("wuli_dashboard_auth", "true"); }; }}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors"
           >
             Enter

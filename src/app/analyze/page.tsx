@@ -661,6 +661,10 @@ function AnalyzeWizardInner() {
         htmlEl.style.borderColor = "#cbd5e1";
         htmlEl.style.backgroundColor = "transparent";
       });
+      // Preserve green on savings elements
+      wrapper.querySelectorAll(".pdf-savings").forEach((el) => {
+        (el as HTMLElement).style.color = "#16a34a";
+      });
       // Style section containers
       wrapper.querySelectorAll("[class*='border']").forEach((el) => {
         const htmlEl = el as HTMLElement;
@@ -676,33 +680,60 @@ function AnalyzeWizardInner() {
       wrapper.querySelectorAll("strong").forEach((el) => {
         (el as HTMLElement).style.color = "#0f172a";
       });
+      // Prevent page breaks inside sections
+      wrapper.querySelectorAll("div").forEach((el) => {
+        (el as HTMLElement).style.pageBreakInside = "avoid";
+        (el as HTMLElement).style.breakInside = "avoid";
+      });
       document.body.appendChild(wrapper);
 
-      const canvas = await html2canvas(wrapper, {
-        backgroundColor: "#ffffff",
-        scale: 2,
-        useCORS: true,
+      // Render each section as a separate canvas to avoid splitting
+      const sections: HTMLElement[] = [];
+      wrapper.querySelectorAll(":scope > div > *").forEach((el) => {
+        sections.push(el as HTMLElement);
       });
 
-      document.body.removeChild(wrapper);
-
-      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      let heightLeft = pdfHeight;
-      let position = 0;
       const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      let yPos = margin;
+      let firstPage = true;
 
-      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
+      for (const section of sections) {
+        const sectionWrapper = document.createElement("div");
+        sectionWrapper.style.position = "absolute";
+        sectionWrapper.style.left = "-9999px";
+        sectionWrapper.style.top = "0";
+        sectionWrapper.style.width = "900px";
+        sectionWrapper.style.background = "#ffffff";
+        sectionWrapper.style.padding = "0 40px";
+        sectionWrapper.appendChild(section.cloneNode(true));
+        // Re-apply green savings color on cloned elements
+        sectionWrapper.querySelectorAll(".pdf-savings").forEach((el) => {
+          (el as HTMLElement).style.color = "#16a34a";
+        });
+        document.body.appendChild(sectionWrapper);
 
-      while (heightLeft > 0) {
-        position -= pageHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
+        const sectionCanvas = await html2canvas(sectionWrapper, {
+          backgroundColor: "#ffffff",
+          scale: 2,
+          useCORS: true,
+        });
+        document.body.removeChild(sectionWrapper);
+
+        const sectionHeight = (sectionCanvas.height * (pdfWidth - margin * 2)) / sectionCanvas.width;
+
+        // If this section won't fit on current page, start a new page
+        if (!firstPage && yPos + sectionHeight > pageHeight - margin) {
+          pdf.addPage();
+          yPos = margin;
+        }
+
+        const imgData = sectionCanvas.toDataURL("image/png");
+        pdf.addImage(imgData, "PNG", margin, yPos, pdfWidth - margin * 2, sectionHeight);
+        yPos += sectionHeight + 2;
+        firstPage = false;
       }
 
       pdf.save(`WULI-TechMatch-${companyData.name || "Report"}.pdf`);
@@ -794,8 +825,8 @@ function AnalyzeWizardInner() {
                     <p style={{ marginBottom: "16px" }}>{businessCase.executive_summary}</p>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "16px" }}>
                       <p><strong>Current Cost:</strong> {businessCase.cost_of_current_situation}</p>
-                      <p><strong>Potential Savings:</strong> {businessCase.potential_annual_savings}</p>
-                      <p><strong>ROI Timeline:</strong> {businessCase.roi_timeline}</p>
+                      <p><strong>Potential Savings:</strong> <span className="pdf-savings" style={{ color: "#16a34a", fontWeight: "bold" }}>{businessCase.potential_annual_savings}</span></p>
+                      <p><strong>ROI Timeline:</strong> <span className="pdf-savings" style={{ color: "#16a34a", fontWeight: "bold" }}>{businessCase.roi_timeline}</span></p>
                     </div>
                     <p style={{ marginBottom: "8px" }}><strong>Key Benefits:</strong></p>
                     <ul style={{ marginLeft: "20px", marginBottom: "16px" }}>

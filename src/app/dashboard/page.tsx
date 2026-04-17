@@ -67,6 +67,12 @@ export default function Dashboard() {
 
   const DASHBOARD_PW = "wuli2026";
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem("wuli_dashboard_auth") === "true") {
+      setAuthed(true);
+    }
+  }, []);
+
   const stats = {
     total: contacts.length,
     sent: contacts.filter(c => events.some(e => e.contact_id === c.id && e.event_type === "email_sent")).length,
@@ -105,7 +111,7 @@ export default function Dashboard() {
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                if (password === DASHBOARD_PW) setAuthed(true);
+                if (password === DASHBOARD_PW) { setAuthed(true); sessionStorage.setItem("wuli_dashboard_auth", "true"); }
                 else setError("Incorrect password");
               }
             }}
@@ -114,7 +120,7 @@ export default function Dashboard() {
           {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
           <button
             onClick={() => {
-              if (password === DASHBOARD_PW) setAuthed(true);
+              if (password === DASHBOARD_PW) { setAuthed(true); sessionStorage.setItem("wuli_dashboard_auth", "true"); }
               else setError("Incorrect password");
             }}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors"
