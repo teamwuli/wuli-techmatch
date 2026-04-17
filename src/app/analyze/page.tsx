@@ -644,19 +644,42 @@ function AnalyzeWizardInner() {
         return;
       }
 
-      // Temporarily show results for capture
+      // Temporarily show results for capture (print-friendly: white bg, dark text)
       const wrapper = document.createElement("div");
       wrapper.style.position = "absolute";
       wrapper.style.left = "-9999px";
       wrapper.style.top = "0";
       wrapper.style.width = "900px";
-      wrapper.style.background = "#020617";
+      wrapper.style.background = "#ffffff";
       wrapper.style.padding = "40px";
+      wrapper.style.color = "#1e293b";
       wrapper.innerHTML = resultsEl.innerHTML;
+      // Override all colors for print
+      wrapper.querySelectorAll("*").forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        htmlEl.style.color = "#1e293b";
+        htmlEl.style.borderColor = "#cbd5e1";
+        htmlEl.style.backgroundColor = "transparent";
+      });
+      // Style section containers
+      wrapper.querySelectorAll("[class*='border']").forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        htmlEl.style.border = "1px solid #cbd5e1";
+        htmlEl.style.borderRadius = "8px";
+        htmlEl.style.padding = "12px";
+      });
+      // Style headings
+      wrapper.querySelectorAll("h1, h2, h3").forEach((el) => {
+        (el as HTMLElement).style.color = "#0f172a";
+      });
+      // Style strong/bold
+      wrapper.querySelectorAll("strong").forEach((el) => {
+        (el as HTMLElement).style.color = "#0f172a";
+      });
       document.body.appendChild(wrapper);
 
       const canvas = await html2canvas(wrapper, {
-        backgroundColor: "#020617",
+        backgroundColor: "#ffffff",
         scale: 2,
         useCORS: true,
       });
@@ -762,35 +785,62 @@ function AnalyzeWizardInner() {
             <StepNextSteps onDownloadPdf={handleDownloadPdf} />
             {/* Hidden results for PDF capture on step 5 */}
             <div id="results-content-hidden" className="hidden">
-              <div className="p-8">
-                <h1 className="text-2xl font-bold mb-4">WULI TechMatch Analysis — {companyData.name}</h1>
+              <div style={{ fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "1.6" }}>
+                <h1 style={{ fontSize: "24px", marginBottom: "4px" }}>WULI TechMatch Analysis</h1>
+                <h2 style={{ fontSize: "18px", fontWeight: "normal", marginBottom: "24px" }}>{companyData.name} — {companyData.industry} — {companyData.size} employees</h2>
                 {businessCase && (
-                  <div className="mb-8">
-                    <h2 className="text-xl font-bold mb-2">Business Case</h2>
-                    <p className="mb-4">{businessCase.executive_summary}</p>
-                    <p><strong>Current Cost:</strong> {businessCase.cost_of_current_situation}</p>
-                    <p><strong>Potential Savings:</strong> {businessCase.potential_annual_savings}</p>
-                    <p><strong>ROI Timeline:</strong> {businessCase.roi_timeline}</p>
+                  <div style={{ marginBottom: "32px" }}>
+                    <h2 style={{ fontSize: "20px", borderBottom: "2px solid #0f172a", paddingBottom: "4px", marginBottom: "12px" }}>Business Case</h2>
+                    <p style={{ marginBottom: "16px" }}>{businessCase.executive_summary}</p>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "16px" }}>
+                      <p><strong>Current Cost:</strong> {businessCase.cost_of_current_situation}</p>
+                      <p><strong>Potential Savings:</strong> {businessCase.potential_annual_savings}</p>
+                      <p><strong>ROI Timeline:</strong> {businessCase.roi_timeline}</p>
+                    </div>
+                    <p style={{ marginBottom: "8px" }}><strong>Key Benefits:</strong></p>
+                    <ul style={{ marginLeft: "20px", marginBottom: "16px" }}>
+                      {businessCase.key_benefits.map((b, i) => (
+                        <li key={i}>{b}</li>
+                      ))}
+                    </ul>
                     <p><strong>Risk of Inaction:</strong> {businessCase.risk_of_inaction}</p>
-                    <p className="mt-4"><strong>Key Insight:</strong> {businessCase.key_insight}</p>
+                    <p style={{ marginTop: "8px" }}><strong>Key Insight:</strong> {businessCase.key_insight}</p>
                   </div>
                 )}
                 {comparisonReport.length > 0 && (
                   <div>
-                    <h2 className="text-xl font-bold mb-4">Strategic Approaches</h2>
+                    <h2 style={{ fontSize: "20px", borderBottom: "2px solid #0f172a", paddingBottom: "4px", marginBottom: "16px" }}>Strategic Approaches</h2>
                     {comparisonReport.map((a, i) => (
-                      <div key={i} className="mb-6 p-4 border border-white/10 rounded-lg">
-                        <h3 className="font-bold">{a.approach_name} — Fit: {a.fit_score}%</h3>
-                        <p>{a.description}</p>
-                        <p><strong>Cost:</strong> {a.estimated_annual_cost} | <strong>Timeline:</strong> {a.deployment_timeline}</p>
-                        <p><strong>Best for:</strong> {a.best_for}</p>
+                      <div key={i} style={{ marginBottom: "24px", padding: "16px", border: "1px solid #cbd5e1", borderRadius: "8px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                          <h3 style={{ fontSize: "16px", fontWeight: "bold", margin: 0 }}>{a.approach_name}</h3>
+                          <span style={{ fontSize: "14px", fontWeight: "bold" }}>{a.fit_score}% fit</span>
+                        </div>
+                        <p style={{ marginBottom: "12px" }}>{a.description}</p>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "12px", fontSize: "13px" }}>
+                          <div><strong>Est. Annual Cost:</strong><br />{a.estimated_annual_cost}</div>
+                          <div><strong>Deployment:</strong><br />{a.deployment_timeline}</div>
+                          <div><strong>Best For:</strong><br />{a.best_for}</div>
+                        </div>
+                        <p style={{ marginBottom: "4px" }}><strong>Key Strengths:</strong></p>
+                        <ul style={{ marginLeft: "20px", marginBottom: "12px" }}>
+                          {a.key_strengths.map((s, j) => (
+                            <li key={j}>{s}</li>
+                          ))}
+                        </ul>
                         {a.relevant_technologies?.length > 0 && (
-                          <p><strong>Technologies:</strong> {a.relevant_technologies.join(", ")}</p>
+                          <p style={{ marginBottom: "8px" }}><strong>Technologies:</strong> {a.relevant_technologies.join(" · ")}</p>
                         )}
+                        <p style={{ padding: "8px", backgroundColor: "#fef3c7", borderRadius: "4px", fontSize: "13px" }}>
+                          <strong>Risk:</strong> {a.key_risk}
+                        </p>
                       </div>
                     ))}
                   </div>
                 )}
+                <div style={{ marginTop: "32px", paddingTop: "12px", borderTop: "1px solid #cbd5e1", fontSize: "12px", color: "#64748b" }}>
+                  Generated by WULI TechMatch — wuli-techmatch-app.vercel.app
+                </div>
               </div>
             </div>
           </>
