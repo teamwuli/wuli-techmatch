@@ -9,6 +9,7 @@ interface StrategicApproach {
   deployment_timeline: string;
   best_for: string;
   key_strengths: string[];
+  relevant_technologies: string[];
   key_risk: string;
 }
 
@@ -44,12 +45,13 @@ Return ONLY a valid JSON array with this exact structure for each approach:
     "deployment_timeline": "X-Y months",
     "best_for": "Description of ideal scenario",
     "key_strengths": ["strength 1", "strength 2", "strength 3"],
+    "relevant_technologies": ["ZTNA", "SD-WAN", "SASE", "UCaaS"],
     "key_risk": "Primary risk or consideration"
   }
 ]`,
         },
       ],
-      system: "You are a senior technology strategist. Generate 3-4 strategic approaches (NOT specific vendor names) for this company's situation. Each approach should be a different strategy, not a vendor recommendation. Focus on categories like 'Cloud-First Migration', 'Hybrid Optimization', 'Best-of-Breed Integration', 'Managed Services Consolidation', etc. Return ONLY valid JSON array, no markdown fences, no explanation.",
+      system: "You are a senior technology strategist. Generate 3-4 strategic approaches (NOT specific vendor names) for this company's situation. Each approach should be a different strategy, not a vendor recommendation. Focus on categories like 'Cloud-First Migration', 'Hybrid Optimization', 'Best-of-Breed Integration', 'Managed Services Consolidation', etc. For each approach, include a 'relevant_technologies' array listing the specific technology categories (NOT vendor names) that would be involved — e.g. ZTNA, CloudPC, SASE, SD-WAN, UCaaS, CCaaS, CPaaS, SIP Trunking, MPLS, DIA, MDR, XDR, SIEM, SOAR, EDR, SOC2, PCI, FFIEC, GRC, DLP, CASB, PAM, MFA, IaaS, DRaaS, BaaS, Colocation, Hyperscale Cloud, Public Cloud, VDI/DaaS, EMM/UEM, IAM, etc. Return ONLY valid JSON array, no markdown fences, no explanation.",
     });
 
     const textContent = message.content.find((c) => c.type === "text");

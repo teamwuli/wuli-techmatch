@@ -32,6 +32,7 @@ interface StrategicApproach {
   deployment_timeline: string;
   best_for: string;
   key_strengths: string[];
+  relevant_technologies: string[];
   key_risk: string;
 }
 
@@ -425,6 +426,19 @@ function StepResults({
                   ))}
                 </div>
 
+                {approach.relevant_technologies?.length > 0 && (
+                  <div className="mb-3">
+                    <span className="text-xs text-slate-500 uppercase tracking-wider">Technologies</span>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {approach.relevant_technologies.map((tech, j) => (
+                        <span key={j} className="px-2 py-1 text-xs rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/20">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm">
                   <span className="text-amber-400 font-medium">⚠ Risk:</span>{" "}
                   <span className="text-slate-300">{approach.key_risk}</span>
@@ -770,6 +784,9 @@ function AnalyzeWizardInner() {
                         <p>{a.description}</p>
                         <p><strong>Cost:</strong> {a.estimated_annual_cost} | <strong>Timeline:</strong> {a.deployment_timeline}</p>
                         <p><strong>Best for:</strong> {a.best_for}</p>
+                        {a.relevant_technologies?.length > 0 && (
+                          <p><strong>Technologies:</strong> {a.relevant_technologies.join(", ")}</p>
+                        )}
                       </div>
                     ))}
                   </div>
