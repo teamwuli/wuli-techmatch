@@ -69,6 +69,8 @@ export default function Dashboard() {
 
   const stats = {
     total: contacts.length,
+    sent: contacts.filter(c => events.some(e => e.contact_id === c.id && e.event_type === "email_sent")).length,
+    opened: contacts.filter(c => events.some(e => e.contact_id === c.id && e.event_type === "email_opened")).length,
     clicked: contacts.filter(c => events.some(e => e.contact_id === c.id && e.event_type === "link_clicked")).length,
     completed: contacts.filter(c => events.some(e => e.contact_id === c.id && e.event_type === "analyzer_completed")).length,
     booked: contacts.filter(c => leads.some(l => l.contact_id === c.id && l.meeting_booked)).length,
@@ -132,16 +134,21 @@ export default function Dashboard() {
           <span className="text-lg font-bold text-white">WULI TechMatch</span>
           <span className="ml-3 text-slate-400 text-sm">Pipeline Dashboard</span>
         </div>
-        <Link href="/" className="text-slate-400 hover:text-white text-sm transition-colors">← Back to site</Link>
+        <div className="flex gap-4">
+          <Link href="/dashboard/analytics" className="text-blue-400 hover:text-blue-300 text-sm transition-colors font-medium">Email Analytics</Link>
+          <Link href="/" className="text-slate-400 hover:text-white text-sm transition-colors">Back to site</Link>
+        </div>
       </nav>
 
       <div className="pt-24 px-6 pb-16 max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">Pipeline</h1>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
           {[
             { label: "Total Contacts", value: stats.total, color: "text-white" },
+            { label: "Emails Sent", value: stats.sent, color: "text-slate-300" },
+            { label: "Emails Opened", value: stats.opened, color: "text-purple-400" },
             { label: "Link Clicks", value: stats.clicked, color: "text-blue-400" },
             { label: "Analyzer Completed", value: stats.completed, color: "text-yellow-400" },
             { label: "Meetings Booked", value: stats.booked, color: "text-green-400" },
@@ -171,6 +178,7 @@ export default function Dashboard() {
                     <th className="px-4 py-3 font-medium">Company</th>
                     <th className="px-4 py-3 font-medium">Trigger</th>
                     <th className="px-4 py-3 font-medium">Emails</th>
+                    <th className="px-4 py-3 font-medium">Opened</th>
                     <th className="px-4 py-3 font-medium">Link Clicked</th>
                     <th className="px-4 py-3 font-medium">Analyzer</th>
                     <th className="px-4 py-3 font-medium">Meeting</th>
@@ -179,6 +187,7 @@ export default function Dashboard() {
                 </thead>
                 <tbody>
                   {contacts.map((c) => {
+                    const opened = events.some(e => e.contact_id === c.id && e.event_type === "email_opened");
                     const clicked = events.some(e => e.contact_id === c.id && e.event_type === "link_clicked");
                     const completed = events.some(e => e.contact_id === c.id && e.event_type === "analyzer_completed");
                     const booked = leads.some(l => l.contact_id === c.id && l.meeting_booked);
@@ -194,6 +203,9 @@ export default function Dashboard() {
                         </td>
                         <td className="px-4 py-3">
                           <EmailBadge sent1={c.email1_sent} sent2={c.email2_sent} sent3={c.email3_sent} />
+                        </td>
+                        <td className="px-4 py-3">
+                          {opened ? <Badge label="✓ Opened" color="blue" /> : <Badge label="No" color="gray" />}
                         </td>
                         <td className="px-4 py-3">
                           {clicked ? <Badge label="✓ Clicked" color="green" /> : <Badge label="No" color="gray" />}
