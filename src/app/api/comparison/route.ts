@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { anthropic } from "@/lib/anthropic";
+// Force deploy - technologies + print-friendly PDF
 
 interface StrategicApproach {
   approach_name: string;
