@@ -644,96 +644,118 @@ function AnalyzeWizardInner() {
         return;
       }
 
-      // Temporarily show results for capture (print-friendly: white bg, dark text)
-      const wrapper = document.createElement("div");
-      wrapper.style.position = "absolute";
-      wrapper.style.left = "-9999px";
-      wrapper.style.top = "0";
-      wrapper.style.width = "900px";
-      wrapper.style.background = "#ffffff";
-      wrapper.style.padding = "40px";
-      wrapper.style.color = "#1e293b";
-      wrapper.innerHTML = resultsEl.innerHTML;
-      // Override all colors for print
-      wrapper.querySelectorAll("*").forEach((el) => {
-        const htmlEl = el as HTMLElement;
-        htmlEl.style.color = "#1e293b";
-        htmlEl.style.borderColor = "#cbd5e1";
-        htmlEl.style.backgroundColor = "transparent";
-      });
-      // Preserve green on savings elements
-      wrapper.querySelectorAll(".pdf-savings").forEach((el) => {
-        (el as HTMLElement).style.color = "#16a34a";
-      });
-      // Style section containers
-      wrapper.querySelectorAll("[class*='border']").forEach((el) => {
-        const htmlEl = el as HTMLElement;
-        htmlEl.style.border = "1px solid #cbd5e1";
-        htmlEl.style.borderRadius = "8px";
-        htmlEl.style.padding = "12px";
-      });
-      // Style headings
-      wrapper.querySelectorAll("h1, h2, h3").forEach((el) => {
-        (el as HTMLElement).style.color = "#0f172a";
-      });
-      // Style strong/bold
-      wrapper.querySelectorAll("strong").forEach((el) => {
-        (el as HTMLElement).style.color = "#0f172a";
-      });
-      // Prevent page breaks inside sections
-      wrapper.querySelectorAll("div").forEach((el) => {
-        (el as HTMLElement).style.pageBreakInside = "avoid";
-        (el as HTMLElement).style.breakInside = "avoid";
-      });
-      document.body.appendChild(wrapper);
-
-      // Render each section as a separate canvas to avoid splitting
-      const sections: HTMLElement[] = [];
-      wrapper.querySelectorAll(":scope > div > *").forEach((el) => {
-        sections.push(el as HTMLElement);
-      });
+      // Collect all sections marked with data-pdf-section
+      const sectionEls = resultsEl.querySelectorAll("[data-pdf-section]");
+      if (sectionEls.length === 0) {
+        alert("No content sections found for PDF.");
+        return;
+      }
 
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 10;
+      const usableWidth = pdfWidth - margin * 2;
+      const usableHeight = pageHeight - margin * 2;
       let yPos = margin;
-      let firstPage = true;
+      let isFirstSection = true;
 
-      for (const section of sections) {
-        const sectionWrapper = document.createElement("div");
-        sectionWrapper.style.position = "absolute";
-        sectionWrapper.style.left = "-9999px";
-        sectionWrapper.style.top = "0";
-        sectionWrapper.style.width = "900px";
-        sectionWrapper.style.background = "#ffffff";
-        sectionWrapper.style.padding = "0 40px";
-        sectionWrapper.appendChild(section.cloneNode(true));
-        // Re-apply green savings color on cloned elements
-        sectionWrapper.querySelectorAll(".pdf-savings").forEach((el) => {
-          (el as HTMLElement).style.color = "#16a34a";
+      for (let s = 0; s < sectionEls.length; s++) {
+        // Create an offscreen wrapper for this section
+        const wrap = document.createElement("div");
+        wrap.style.position = "absolute";
+        wrap.style.left = "-9999px";
+        wrap.style.top = "0";
+        wrap.style.width = "820px";
+        wrap.style.background = "#ffffff";
+        wrap.style.color = "#1e293b";
+        wrap.style.padding = "20px";
+        wrap.appendChild(sectionEls[s].cloneNode(true));
+
+        // Apply print styles
+        wrap.querySelectorAll("*").forEach((el) => {
+          const h = el as HTMLElement;
+          if (!h.classList.contains("pdf-savings")) {
+            h.style.color = "#1e293b";
+          }
         });
-        document.body.appendChild(sectionWrapper);
+        wrap.querySelectorAll(".pdf-savings").forEach((el) => {
+          (el as HTMLElement).style.color = "#16a34a";
+          (el as HTMLElement).style.fontWeight = "bold";
+        });
+        wrap.querySelectorAll("h1, h2, h3").forEach((el) => {
+          (el as HTMLElement).style.color = "#0f172a";
+        });
+        wrap.querySelectorAll("strong").forEach((el) => {
+          (el as HTMLElement).style.color = "#0f172a";
+        });
 
-        const sectionCanvas = await html2canvas(sectionWrapper, {
+        document.body.appendChild(wrap);
+
+        const canvas = await html2canvas(wrap, {
           backgroundColor: "#ffffff",
           scale: 2,
           useCORS: true,
         });
-        document.body.removeChild(sectionWrapper);
+        document.body.removeChild(wrap);
 
-        const sectionHeight = (sectionCanvas.height * (pdfWidth - margin * 2)) / sectionCanvas.width;
+        const imgHeight = (canvas.height * usableWidth) / canvas.width;
 
-        // If this section won't fit on current page, start a new page
-        if (!firstPage && yPos + sectionHeight > pageHeight - margin) {
+        // If section doesn't fit and we're not at top of page, start new page
+        if (!isFirstSection && yPos + imgHeight > pageHeight - margin) {
           pdf.addPage();
           yPos = margin;
         }
 
-        const imgData = sectionCanvas.toDataURL("image/png");
-        pdf.addImage(imgData, "PNG", margin, yPos, pdfWidth - margin * 2, sectionHeight);
-        yPos += sectionHeight + 2;
-        firstPage = false;
+        // If a single section is taller than a page, it needs to span multiple pages
+        if (imgHeight > usableHeight) {
+          let remainingHeight = imgHeight;
+          let sourceY = 0;
+
+          while (remainingHeight > 0) {
+            if (sourceY > 0) {
+              pdf.addPage();
+              yPos = margin;
+            }
+            const sliceHeight = Math.min(remainingHeight, usableHeight);
+            // Calculate source slice from the canvas
+            const srcSliceRatio = sliceHeight / imgHeight;
+            const srcY = (sourceY / imgHeight) * canvas.height;
+            const srcH = srcSliceRatio * canvas.height;
+
+            // Create a slice canvas
+            const sliceCanvas = document.createElement("canvas");
+            sliceCanvas.width = canvas.width;
+            sliceCanvas.height = Math.ceil(srcH);
+            const ctx = sliceCanvas.getContext("2d");
+            if (ctx) {
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+              ctx.drawImage(canvas, 0, Math.floor(srcY), canvas.width, Math.ceil(srcH), 0, 0, sliceCanvas.width, Math.ceil(srcH));
+            }
+            const sliceData = sliceCanvas.toDataURL("image/png");
+            pdf.addImage(sliceData, "PNG", margin, yPos, usableWidth, sliceHeight);
+
+            sourceY += sliceHeight;
+            remainingHeight -= sliceHeight;
+          }
+          yPos = margin + (imgHeight % usableHeight || usableHeight);
+        } else {
+          const imgData = canvas.toDataURL("image/png");
+          pdf.addImage(imgData, "PNG", margin, yPos, usableWidth, imgHeight);
+          yPos += imgHeight;
+        }
+
+        isFirstSection = false;
+      }
+
+      // Remove any trailing blank pages
+      const totalPages = pdf.getNumberOfPages();
+      if (totalPages > 1) {
+        // Check last page — if yPos is very close to margin, remove it
+        if (yPos <= margin + 5) {
+          pdf.deletePage(totalPages);
+        }
       }
 
       pdf.save(`WULI-TechMatch-${companyData.name || "Report"}.pdf`);
@@ -816,62 +838,62 @@ function AnalyzeWizardInner() {
             <StepNextSteps onDownloadPdf={handleDownloadPdf} />
             {/* Hidden results for PDF capture on step 5 */}
             <div id="results-content-hidden" className="hidden">
-              <div style={{ fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "1.6" }}>
+              <div data-pdf-section style={{ fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "1.6", marginBottom: "16px" }}>
                 <h1 style={{ fontSize: "24px", marginBottom: "4px" }}>WULI TechMatch Analysis</h1>
-                <h2 style={{ fontSize: "18px", fontWeight: "normal", marginBottom: "24px" }}>{companyData.name} — {companyData.industry} — {companyData.size} employees</h2>
-                {businessCase && (
-                  <div style={{ marginBottom: "32px" }}>
-                    <h2 style={{ fontSize: "20px", borderBottom: "2px solid #0f172a", paddingBottom: "4px", marginBottom: "12px" }}>Business Case</h2>
-                    <p style={{ marginBottom: "16px" }}>{businessCase.executive_summary}</p>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "16px" }}>
-                      <p><strong>Current Cost:</strong> {businessCase.cost_of_current_situation}</p>
-                      <p><strong>Potential Savings:</strong> <span className="pdf-savings" style={{ color: "#16a34a", fontWeight: "bold" }}>{businessCase.potential_annual_savings}</span></p>
-                      <p><strong>ROI Timeline:</strong> <span className="pdf-savings" style={{ color: "#16a34a", fontWeight: "bold" }}>{businessCase.roi_timeline}</span></p>
-                    </div>
-                    <p style={{ marginBottom: "8px" }}><strong>Key Benefits:</strong></p>
-                    <ul style={{ marginLeft: "20px", marginBottom: "16px" }}>
-                      {businessCase.key_benefits.map((b, i) => (
-                        <li key={i}>{b}</li>
-                      ))}
-                    </ul>
-                    <p><strong>Risk of Inaction:</strong> {businessCase.risk_of_inaction}</p>
-                    <p style={{ marginTop: "8px" }}><strong>Key Insight:</strong> {businessCase.key_insight}</p>
+                <h2 style={{ fontSize: "18px", fontWeight: "normal", marginBottom: "0" }}>{companyData.name} — {companyData.industry} — {companyData.size} employees</h2>
+              </div>
+              {businessCase && (
+                <div data-pdf-section style={{ fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "1.6", marginBottom: "16px" }}>
+                  <h2 style={{ fontSize: "20px", borderBottom: "2px solid #0f172a", paddingBottom: "4px", marginBottom: "12px" }}>Business Case</h2>
+                  <p style={{ marginBottom: "16px" }}>{businessCase.executive_summary}</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "16px" }}>
+                    <p><strong>Current Cost:</strong> {businessCase.cost_of_current_situation}</p>
+                    <p><strong>Potential Savings:</strong> <span className="pdf-savings" style={{ color: "#16a34a", fontWeight: "bold" }}>{businessCase.potential_annual_savings}</span></p>
+                    <p><strong>ROI Timeline:</strong> <span className="pdf-savings" style={{ color: "#16a34a", fontWeight: "bold" }}>{businessCase.roi_timeline}</span></p>
                   </div>
-                )}
-                {comparisonReport.length > 0 && (
-                  <div>
-                    <h2 style={{ fontSize: "20px", borderBottom: "2px solid #0f172a", paddingBottom: "4px", marginBottom: "16px" }}>Strategic Approaches</h2>
-                    {comparisonReport.map((a, i) => (
-                      <div key={i} style={{ marginBottom: "24px", padding: "16px", border: "1px solid #cbd5e1", borderRadius: "8px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                          <h3 style={{ fontSize: "16px", fontWeight: "bold", margin: 0 }}>{a.approach_name}</h3>
-                          <span style={{ fontSize: "14px", fontWeight: "bold" }}>{a.fit_score}% fit</span>
-                        </div>
-                        <p style={{ marginBottom: "12px" }}>{a.description}</p>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "12px", fontSize: "13px" }}>
-                          <div><strong>Est. Annual Cost:</strong><br />{a.estimated_annual_cost}</div>
-                          <div><strong>Deployment:</strong><br />{a.deployment_timeline}</div>
-                          <div><strong>Best For:</strong><br />{a.best_for}</div>
-                        </div>
-                        <p style={{ marginBottom: "4px" }}><strong>Key Strengths:</strong></p>
-                        <ul style={{ marginLeft: "20px", marginBottom: "12px" }}>
-                          {a.key_strengths.map((s, j) => (
-                            <li key={j}>{s}</li>
-                          ))}
-                        </ul>
-                        {a.relevant_technologies?.length > 0 && (
-                          <p style={{ marginBottom: "8px" }}><strong>Technologies:</strong> {a.relevant_technologies.join(" · ")}</p>
-                        )}
-                        <p style={{ padding: "8px", backgroundColor: "#fef3c7", borderRadius: "4px", fontSize: "13px" }}>
-                          <strong>Risk:</strong> {a.key_risk}
-                        </p>
-                      </div>
+                  <p style={{ marginBottom: "8px" }}><strong>Key Benefits:</strong></p>
+                  <ul style={{ marginLeft: "20px", marginBottom: "16px" }}>
+                    {businessCase.key_benefits.map((b, i) => (
+                      <li key={i}>{b}</li>
                     ))}
-                  </div>
-                )}
-                <div style={{ marginTop: "32px", paddingTop: "12px", borderTop: "1px solid #cbd5e1", fontSize: "12px", color: "#64748b" }}>
-                  Generated by WULI TechMatch — wuli-techmatch-app.vercel.app
+                  </ul>
+                  <p><strong>Risk of Inaction:</strong> {businessCase.risk_of_inaction}</p>
+                  <p style={{ marginTop: "8px" }}><strong>Key Insight:</strong> {businessCase.key_insight}</p>
                 </div>
+              )}
+              {comparisonReport.length > 0 && (
+                <div data-pdf-section style={{ fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "1.6", marginBottom: "8px" }}>
+                  <h2 style={{ fontSize: "20px", borderBottom: "2px solid #0f172a", paddingBottom: "4px", marginBottom: "0" }}>Strategic Approaches</h2>
+                </div>
+              )}
+              {comparisonReport.map((a, i) => (
+                <div key={i} data-pdf-section style={{ fontFamily: "Arial, sans-serif", fontSize: "14px", lineHeight: "1.6", marginBottom: "16px", padding: "16px", border: "1px solid #cbd5e1", borderRadius: "8px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                    <h3 style={{ fontSize: "16px", fontWeight: "bold", margin: 0 }}>{a.approach_name}</h3>
+                    <span style={{ fontSize: "14px", fontWeight: "bold" }}>{a.fit_score}% fit</span>
+                  </div>
+                  <p style={{ marginBottom: "12px" }}>{a.description}</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "12px", fontSize: "13px" }}>
+                    <div><strong>Est. Annual Cost:</strong><br /><span className="pdf-savings" style={{ color: "#16a34a", fontWeight: "bold" }}>{a.estimated_annual_cost}</span></div>
+                    <div><strong>Deployment:</strong><br />{a.deployment_timeline}</div>
+                    <div><strong>Best For:</strong><br />{a.best_for}</div>
+                  </div>
+                  <p style={{ marginBottom: "4px" }}><strong>Key Strengths:</strong></p>
+                  <ul style={{ marginLeft: "20px", marginBottom: "12px" }}>
+                    {a.key_strengths.map((s, j) => (
+                      <li key={j}>{s}</li>
+                    ))}
+                  </ul>
+                  {a.relevant_technologies?.length > 0 && (
+                    <p style={{ marginBottom: "8px" }}><strong>Technologies:</strong> {a.relevant_technologies.join(" · ")}</p>
+                  )}
+                  <p style={{ padding: "8px", backgroundColor: "#fef3c7", borderRadius: "4px", fontSize: "13px" }}>
+                    <strong>Risk:</strong> {a.key_risk}
+                  </p>
+                </div>
+              ))}
+              <div data-pdf-section style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", paddingTop: "12px", borderTop: "1px solid #cbd5e1", color: "#64748b" }}>
+                Generated by WULI TechMatch — wuli-techmatch-app.vercel.app
               </div>
             </div>
           </>
